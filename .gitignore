@@ -1,0 +1,56 @@
+# Скомпилированные Python-файлы
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Логи тестов и временные файлы
+.pytest_cache/
+*.log
+
+# Poetry / Python env
+.venv/
+venv/
+ENV/
+env/
+
+# Папки сборки Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Vim swap
+*.swp
+*.swo
+*~
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# MacOS
+.DS_Store
+
+# dotenv файлы
+.env
+
+# Файлы баз данных
+*.sqlite3
+*.db
+*.db-journal
+
+# Кэш mypy
+.mypy_cache/
+
+# Coverage отчеты
+htmlcov/
+.coverage
+coverage.xml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Docker временные файлы
+*.dockerignore
