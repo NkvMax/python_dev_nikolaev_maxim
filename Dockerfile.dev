@@ -1,0 +1,20 @@
+FROM python:3.9-slim
+
+# Рабочая директория внутри контейнера
+WORKDIR /app
+
+# Системные зависимости для сборки и Postgres-клиента
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir "poetry>=2.1.3"
+
+COPY pyproject.toml poetry.lock /app/
+
+# Инсталлируем все зависимости в контейнер (без виртуального окружения)
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-interaction --no-ansi --no-root
+
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "src"]
