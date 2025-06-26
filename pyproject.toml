@@ -41,6 +41,9 @@ alembic = ">=1.16.2,<2.0.0"
 [tool.poetry.dev-dependencies]
 pytest = "8.3.5"
 
+[tool.poetry.group.dev.dependencies]
+faker = "^37.4.0"
+
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
