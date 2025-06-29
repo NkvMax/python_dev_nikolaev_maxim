@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
 
@@ -45,6 +46,7 @@ class EventType(Base):
     name = Column(String, unique=True, nullable=False)
 
 
+
 class Log(Base):
     __tablename__ = "logs"
 
@@ -53,3 +55,6 @@ class Log(Base):
     user_id = Column(Integer, nullable=False)
     space_type_id = Column(Integer, ForeignKey("space_type.id"), nullable=False)
     event_type_id = Column(Integer, ForeignKey("event_type.id"), nullable=False)
+    object_id = Column(Integer, nullable=False)
+    space_type = relationship("SpaceType")
+    event_type = relationship("EventType")
