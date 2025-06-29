@@ -4,45 +4,25 @@ version = "0.1.0"
 description = ""
 authors = ["Maxim Nikolaev <you@example.com>"]
 readme = "README.md"
-packages = [
-  { include = "app", from = "src" }
-]
+packages = [{ include = "app", from = "src" }]
 
 [tool.poetry.dependencies]
-python = ">=3.9"
-annotated-types = "0.7.0"
-anyio = "4.8.0"
-certifi = "2025.1.31"
-cffi = "1.17.1"
-click = "8.1.8"
-cryptography = "41.0.2"
-exceptiongroup = "1.2.2"
-fastapi = "0.115.11"
-h11 = "0.14.0"
-httpcore = "1.0.7"
-httpx = "0.28.1"
-idna = "3.10"
-iniconfig = "2.0.0"
-packaging = "24.2"
-pluggy = "1.5.0"
-pycparser = "2.22"
-pydantic = "2.10.6"
-pydantic-core = "2.27.2"
-python-dotenv = "1.0.1"
-sniffio = "1.3.1"
-starlette = "0.46.1"
-tomli = "2.2.1"
-typing-extensions = "4.12.2"
-uvicorn = {extras = ["standard"], version = ">=0.34.3,<0.35.0"}
-psycopg2-binary = ">=2.9.10,<3.0.0"
-sqlalchemy = ">=2.0.41,<3.0.0"
-alembic = ">=1.16.2,<2.0.0"
-
-[tool.poetry.dev-dependencies]
-pytest = "8.3.5"
+python = ">=3.9,<4.0"
+fastapi = "0.115.1"
+uvicorn = { extras = ["standard"], version = "^0.34.0" }
+sqlalchemy = "^2.0.41"
+alembic = "^1.16.2"
+psycopg2-binary = "^2.9.10"
+httpx = "0.27.*"
+python-dotenv = "^1.0.1"
+pydantic = "^2.10.6"
 
 [tool.poetry.group.dev.dependencies]
-faker = "^37.4.0"
+pytest = "^8.3"
+pytest-httpx = "^0.30.0"
+pytest-faker = "^2.0"
+faker = "^24.0"
+testcontainers = {version = "^4.4", markers = "python_version < '4.0'"}
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
