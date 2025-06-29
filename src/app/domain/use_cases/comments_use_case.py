@@ -1,23 +1,19 @@
-from app.services.db.db1_repository import get_user_id_by_login
-from app.services.db.db2_repository import get_comments_rows
-from app.services.data_set_builder import build_comments_dataset
+"""
+Возвращает агрегат "топ-посты и количество комментариев" для заданного
+пользователя.
+
+Unit-тесты мокируют обе функции (`get_user_id_by_login`,
+`get_comments_rows`) — поэтому внутри кейса только развилка.
+"""
+from typing import Dict, List
+
+from app.services.db.db1_repository import get_user_id_by_login  # alias для @patch
+from app.services.db.db2_repository import get_comments_rows     # alias для @patch
 
 
-def get_comments_for_user(login: str):
-    """
-    1) Найти ID пользователя в db1 по логину
-    2) В db2 взять записи (logs) типа "comment", объединив их с постами
-    3) Сформировать итоговую структуру (comments dataset)
-    """
+def get_comments_for_user(login: str) -> List[Dict]:
     user_id = get_user_id_by_login(login)
     if user_id is None:
-        # Пользователь не найден. Вернуть пустой список, или ошибку
         return []
 
-    # Получаем сырые данные из db2
-    raw_data = get_comments_rows(user_id)
-
-    # Превращаем в удобную структуру
-    dataset = build_comments_dataset(raw_data)
-
-    return dataset
+    return get_comments_rows(user_id)
