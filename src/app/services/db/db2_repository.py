@@ -1,63 +1,75 @@
-from app.config import MySQLConnector, MYSQL_DB2_CONFIG
+"""
+Запросы в БД логов.
+"""
+from __future__ import annotations
+
+from datetime import date
+from typing import Any, Dict, List
+
+from sqlalchemy import Date, cast, func, select
+from sqlalchemy.orm import Session
+
+from app.db.models import EventType, Log, SpaceType
+from app.db.session import SessionLogs
 
 
-def get_comments_rows(user_id: int):
+# комментарии пользователя
+def get_comment_stats(user_id: int) -> List[Dict[str, Any]]:
     """
-    Достаем комментарии пользователя (event_type='comment'),
-    JOIN-им post, space_type, event_type, и т.д
-    Возвращаем сырые строки, где есть:
-    - user_login (u.login)
-    - post_header (p.header)
-    - post_author_login (u2.login)
-    - total_comments (агрегация)
+    [{"post_id": 1, "total_comments": 3}, ...]
     """
-    conn = MySQLConnector(MYSQL_DB2_CONFIG)
-    try:
-        query = """
-        SELECT
-            u.login AS user_login,
-            p.header AS post_header,
-            u2.login AS post_author_login,
-            COUNT(*) AS total_comments
-        FROM logs l
-        JOIN event_type e ON l.event_type_id = e.id
-        JOIN space_type s ON l.space_type_id = s.id
-        -- Подключаемся к db1 "через прямое указание схемы db1"
-        JOIN db1.post p ON l.object_id = p.id
-        JOIN db1.users u2 ON p.author_id = u2.id
-        JOIN db1.users u ON l.user_id = u.id
-        WHERE e.name = 'comment'
-          AND l.user_id = %s
-        GROUP BY u.login, p.header, u2.login
-        ORDER BY p.header
-        """
-        result = conn.execute_query(query, (user_id,))
-        return result
-    finally:
-        conn.close()
+    with SessionLogs() as session:
+        ev_comment_id = session.scalar(
+            select(EventType.id).where(EventType.name == "comment")
+        )
+
+        rows = (
+            session.execute(
+                select(
+                    Log.object_id.label("post_id"),
+                    func.count(Log.id).label("total_comments"),
+                )
+                .where(Log.user_id == user_id,
+                       Log.event_type_id == ev_comment_id)
+                .group_by(Log.object_id)
+            )
+            .mappings()
+            .all()
+        )
+        return [dict(r) for r in rows]
 
 
-def get_general_logs_for_user(user_id: int):
+# совместимость со старыми тестами/импортами
+get_comments_rows = get_comment_stats
+
+
+# общая статистика по дням
+def _date_expr(session: Session):
+    """sqlite -> func.date();  Postgres -> CAST(... AS DATE)"""
+    if session.bind.dialect.name == "sqlite":
+        return func.date(Log.datetime)
+    return cast(Log.datetime, Date)
+
+
+def get_general_logs_for_user(user_id: int) -> List[Dict[str, Any]]:
     """
-    Достаем сырые логи пользователя,
-    (date, event_type, space_type, user_login) -- user_login можно JOIN-ить или
-    просто user_id.
-    Но для агрегации достаточно (datetime, event_type, space_type)
+    [{'dt', 'event_name', 'space_name', 'total'}, ...]
     """
-    conn = MySQLConnector(MYSQL_DB2_CONFIG)
-    try:
-        query = """
-        SELECT
-            DATE(l.datetime) AS dt,
-            e.name AS event_name,
-            s.name AS space_name
-        FROM logs l
-        JOIN event_type e ON l.event_type_id = e.id
-        JOIN space_type s ON l.space_type_id = s.id
-        WHERE l.user_id = %s
-        ORDER BY l.datetime
-        """
-        result = conn.execute_query(query, (user_id,))
-        return result
-    finally:
-        conn.close()
+    with SessionLogs() as session:
+        date_col = _date_expr(session).label("dt")
+
+        stmt = (
+            select(
+                date_col,
+                EventType.name.label("event_name"),
+                SpaceType.name.label("space_name"),
+                func.count(Log.id).label("total"),
+            )
+            .join(EventType, Log.event_type_id == EventType.id)
+            .join(SpaceType, Log.space_type_id == SpaceType.id)
+            .where(Log.user_id == user_id)
+            .group_by(date_col, EventType.name, SpaceType.name)
+            .order_by(date_col)
+        )
+
+        return [dict(r) for r in session.execute(stmt).mappings().all()]

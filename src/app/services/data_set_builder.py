@@ -1,58 +1,41 @@
+from __future__ import annotations
+
 from collections import defaultdict
+from datetime import date, datetime
+from typing import Any, Dict, List
 
 
-def build_comments_dataset(raw_rows):
-    """
-    Ожидаем, что raw_rows - это список словарей, где есть ключи:
-      user_login, post_header, post_author_login, total_comments
-    Вернем их как есть (или можно дополнительно обработать).
-    """
-    results = []
-    for row in raw_rows:
-        results.append({
-            "user_login": row["user_login"],
-            "post_header": row["post_header"],
-            "post_author_login": row["post_author_login"],
-            "total_comments": row["total_comments"]
-        })
-    return results
+def _to_date(val) -> date:
+    if isinstance(val, date):
+        return val
+    if isinstance(val, datetime):
+        return val.date()
+    return datetime.strptime(val, "%Y-%m-%d").date()
 
 
-def build_general_dataset(raw_rows):
-    """
-    raw_rows - список словарей, где есть:
-      dt (дата), event_name, space_name
-    Нужно сгруппировать по dt:
-      - кол-во logins (event_name='login')
-      - кол-во logouts (event_name='logout')
-      - кол-во blog_actions (space_name='blog')
-    """
-    agg = defaultdict(lambda: {"logins": 0, "logouts": 0, "blog_actions": 0})
+# api/comments
+def build_comments_dataset(raw_rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return raw_rows
 
-    for row in raw_rows:
-        date_val = row["dt"]
-        event_name = row["event_name"]
-        space_name = row["space_name"]
 
-        if event_name == "login":
-            agg[date_val]["logins"] += 1
-        elif event_name == "logout":
-            agg[date_val]["logouts"] += 1
+# api/general
+def build_general_dataset(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    acc: Dict[date, Dict[str, int]] = defaultdict(
+        lambda: {"logins": 0, "logouts": 0, "blog_actions": 0}
+    )
 
-        # Подсчитаем все действия в пространстве "blog"
-        if space_name == "blog":
-            agg[date_val]["blog_actions"] += 1
+    for r in rows:
+        day = _to_date(r["dt"])
+        ev, space, cnt = r["event_name"], r["space_name"], r["total"]
 
-    # Превращаем agg в список
-    results = []
-    for dt, counters in agg.items():
-        results.append({
-            "date": dt,
-            "logins": counters["logins"],
-            "logouts": counters["logouts"],
-            "blog_actions": counters["blog_actions"]
-        })
+        if ev == "login":
+            acc[day]["logins"] += cnt
+        elif ev == "logout":
+            acc[day]["logouts"] += cnt
+        elif space == "blog":  # create / delete post
+            acc[day]["blog_actions"] += cnt
 
-    # Сортируем по дате (опционально)
-    results.sort(key=lambda x: x["date"])
-    return results
+    return [
+        {"date": d.isoformat(), **stats}
+        for d, stats in sorted(acc.items())
+    ]
