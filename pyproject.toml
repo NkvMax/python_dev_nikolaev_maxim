@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "python-dev-nikolaev-maxim"
+version = "0.1.0"
+description = ""
+authors = ["Maxim Nikolaev <you@example.com>"]
+readme = "README.md"
+packages = [{ include = "app", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<4.0"
+fastapi = "0.115.1"
+uvicorn = { extras = ["standard"], version = "^0.34.0" }
+sqlalchemy = "^2.0.41"
+alembic = "^1.16.2"
+psycopg2-binary = "^2.9.10"
+httpx = "0.27.*"
+python-dotenv = "^1.0.1"
+pydantic = "^2.10.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3"
+pytest-httpx = "^0.30.0"
+pytest-faker = "^2.0"
+faker = "^24.0"
+testcontainers = {version = "^4.4", markers = "python_version < '4.0'"}
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
